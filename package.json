@@ -1,0 +1,11 @@
+{
+  "name": "lwpyh",
+  "version": "1.0.0",
+  "description": "[Documentation](https://nni.readthedocs.io/en/latest/NAS/DARTS.html)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

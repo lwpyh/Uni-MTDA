@@ -1,0 +1,80 @@
+feat_classifier_dy(
+  (fc): Dy_Linear(in_features=256, out_features=50, bias=True)
+)
+Accuracy = 76.42% -> 81.04%
+
+32
+/homes/jh015/.conda/envs/jh015/lib/python3.7/site-packages/torch/nn/functional.py:718: UserWarning: Named tensors and all their associated APIs are an experimental feature and subject to change. Please do not use them for anything important until they are released as stable. (Triggered internally at  /opt/conda/conda-bld/pytorch_1623448224956/work/c10/core/TensorImpl.h:1156.)
+  return torch.max_pool2d(input, kernel_size, stride, padding, dilation, ceil_mode)
+Task: AR, Iter:28/420; Accuracy = 72.54%
+
+Accuracy = 71.68% -> 74.39%
+
+27
+Task: AR, Iter:56/420; Accuracy = 82.77%
+
+Accuracy = 82.54% -> 82.89%
+
+27
+Task: AR, Iter:84/420; Accuracy = 83.70%
+
+Accuracy = 83.70% -> 83.99%
+
+27
+Task: AR, Iter:112/420; Accuracy = 83.58%
+
+Accuracy = 83.58% -> 83.47%
+
+27
+Task: AR, Iter:140/420; Accuracy = 84.80%
+
+Accuracy = 84.80% -> 84.45%
+
+27
+Task: AR, Iter:168/420; Accuracy = 84.39%
+
+Accuracy = 84.39% -> 84.28%
+
+27
+Task: AR, Iter:196/420; Accuracy = 84.45%
+
+Accuracy = 84.45% -> 84.28%
+
+27
+Task: AR, Iter:224/420; Accuracy = 84.62%
+
+Accuracy = 84.62% -> 84.34%
+
+27
+Task: AR, Iter:252/420; Accuracy = 84.39%
+
+Accuracy = 84.39% -> 84.22%
+
+27
+Task: AR, Iter:280/420; Accuracy = 84.39%
+
+Accuracy = 84.39% -> 84.16%
+
+27
+Task: AR, Iter:308/420; Accuracy = 84.16%
+
+Accuracy = 84.16% -> 84.34%
+
+27
+Task: AR, Iter:336/420; Accuracy = 84.22%
+
+Accuracy = 84.22% -> 84.22%
+
+27
+Task: AR, Iter:364/420; Accuracy = 84.28%
+
+Accuracy = 84.28% -> 84.28%
+
+27
+Task: AR, Iter:392/420; Accuracy = 84.62%
+
+Accuracy = 84.62% -> 84.34%
+
+27
+Task: AR, Iter:420/420; Accuracy = 84.86%
+

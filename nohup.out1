@@ -1,0 +1,31 @@
+nohup: 忽略输入
+/homes/jh015/.conda/envs/hj_trans/lib/python3.7/site-packages/torchvision/models/_utils.py:209: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and will be removed in 0.15, please use 'weights' instead.
+  f"The parameter '{pretrained_param}' is deprecated since 0.13 and will be removed in 0.15, "
+/homes/jh015/.conda/envs/hj_trans/lib/python3.7/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and will be removed in 0.15. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Task: P, Iter:120/1200; Accuracy = 94.61%
+
+Task: P, Iter:240/1200; Accuracy = 94.01%
+
+Task: P, Iter:360/1200; Accuracy = 94.01%
+
+Task: P, Iter:480/1200; Accuracy = 93.41%
+
+Task: P, Iter:600/1200; Accuracy = 93.41%
+
+Task: P, Iter:720/1200; Accuracy = 94.01%
+
+Task: P, Iter:840/1200; Accuracy = 92.81%
+
+Task: P, Iter:960/1200; Accuracy = 93.41%
+
+Task: P, Iter:1080/1200; Accuracy = 94.01%
+
+Task: P, Iter:1200/1200; Accuracy = 92.81%
+
+Traceback (most recent call last):
+  File "image_source_da2.py", line 556, in <module>
+    test_target(args)
+  File "image_source_da2.py", line 440, in test_target
+    acc, _ = cal_acc(dset_loaders['test'], netF, netB, netC, netC_ex, False)
+TypeError: cal_acc() takes from 4 to 5 positional arguments but 6 were given

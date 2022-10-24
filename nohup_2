@@ -1,0 +1,31 @@
+nohup: 忽略输入
+/homes/jh015/.conda/envs/hj_trans/lib/python3.7/site-packages/torchvision/models/_utils.py:209: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and will be removed in 0.15, please use 'weights' instead.
+  f"The parameter '{pretrained_param}' is deprecated since 0.13 and will be removed in 0.15, "
+/homes/jh015/.conda/envs/hj_trans/lib/python3.7/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and will be removed in 0.15. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Task: P, Iter:250/2500; Accuracy = 90.60%
+
+Task: P, Iter:500/2500; Accuracy = 90.60%
+
+Task: P, Iter:750/2500; Accuracy = 90.60%
+
+Task: P, Iter:1000/2500; Accuracy = 91.45%
+
+Task: P, Iter:1250/2500; Accuracy = 91.17%
+
+Task: P, Iter:1500/2500; Accuracy = 90.88%
+
+Task: P, Iter:1750/2500; Accuracy = 90.88%
+
+Task: P, Iter:2000/2500; Accuracy = 90.60%
+
+Task: P, Iter:2250/2500; Accuracy = 91.45%
+
+Task: P, Iter:2500/2500; Accuracy = 91.17%
+
+
+Training: val, Task: PR, Accuracy = 74.86%
+
+Training: val, Task: PA, Accuracy = 54.79%
+
+Training: val, Task: PC, Accuracy = 45.76%

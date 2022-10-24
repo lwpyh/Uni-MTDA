@@ -1,0 +1,38 @@
+==========================================
+gpu_id:0
+max_epoch:15
+interval:15
+batch_size:64
+worker:4
+distance:cosine
+dset:office-home
+lr:0.01
+net:resnet50
+seed:2019
+epsilon:1e-05
+gent:False
+ent:True
+threshold:30
+cls_par:0.3
+ent_par:1.0
+output:seed
+da:pda
+issave:False
+lr_decay1:0.1
+class_num:50
+s:0
+s_dset_path:./data/office-home/Art.txt
+t_dset_path:./data/office-home/Clipart.txt
+test_dset_path:./data/office-home/Clipart.txt
+t_dset_path1:./data/office-home/Product.txt
+test_dset_path1:./data/office-home/Product.txt
+t_dset_path2:./data/office-home/Real_World.txt
+test_dset_path2:./data/office-home/Real_World.txt
+output_dir:seed/pda/office-home-addfc+gent
+name:office-home
+src_classes:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+tar_classes:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+tar_classes1:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+savename:par_0.3_thr30
+out_file:<_io.TextIOWrapper name='seed/pda/office-home-addfc+gent/log_par_0.3_thr30.txt' mode='w' encoding='UTF-8'>
+
