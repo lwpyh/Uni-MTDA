@@ -98,3 +98,4 @@ venv.bak/
 # VSCode
 .vscode
 .vs
+.ipynb_checkpoints

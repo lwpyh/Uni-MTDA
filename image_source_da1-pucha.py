@@ -426,7 +426,7 @@ if __name__ == "__main__":
 
     if args.dset == 'office-home':
         # names = ['Product', 'Clipart', 'Real_World', 'Art']
-        names = ['Art_U', 'Product_U', 'Clipart_U', 'Real_World_U']
+        names = ['Art', 'Product', 'Clipart', 'RealWorld']
         args.class_num = 65
     if args.dset == 'office':
         names = ['amazon', 'dslr', 'webcam']

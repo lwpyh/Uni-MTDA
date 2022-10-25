@@ -1,28 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-@Time ： 2021/2/2 9:19
-@Auth ： PUCHAZHONG
-@File ：image_target_ori.py
-@IDE ：PyCharm
-@CONTACT: zhonghw@zhejianglab.com
-"""
 import argparse
 import os, sys
 import os.path as osp
 import torchvision
+from torchvision import transforms
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import transforms
 import network, loss
 from torch.utils.data import DataLoader
 from data_list import ImageList, ImageList_idx
 import random, pdb, math, copy
-from tqdm import tqdm
+
 from scipy.spatial.distance import cdist
 from sklearn.metrics import confusion_matrix
-
+import torch.nn.functional as F
+from sklearn.cluster import KMeans
 
 def op_copy(optimizer):
     for param_group in optimizer.param_groups:
@@ -95,7 +88,6 @@ def data_load(args):
                     new_tar.append(line)
         txt_tar = new_tar.copy()
         txt_test = txt_tar.copy()
-
     dsets["target"] = ImageList_idx(txt_tar, transform=image_train())
     dset_loaders["target"] = DataLoader(dsets["target"], batch_size=train_bs, shuffle=True, num_workers=args.worker,
                                         drop_last=False)
@@ -106,7 +98,7 @@ def data_load(args):
     return dset_loaders
 
 
-def cal_acc(loader, netF, netB, netC, label_list,label_map, flag=False):
+def cal_acc(loader, netF, netB, netC, label_list, label_map, flag=False):
     start_test = True
     with torch.no_grad():
         iter_test = iter(loader)
@@ -154,8 +146,9 @@ def train_target(args):
 
     netB = network.feat_bootleneck(type=args.classifier, feature_dim=netF.in_features,
                                    bottleneck_dim=args.bottleneck).cuda()
+    # print("class_num", args.class_num)
     netC = network.feat_classifier_dy(type=args.layer, class_num=args.class_num, bottleneck_dim=args.bottleneck).cuda()
-    print(netC)
+
     modelpath = args.output_dir_src + '/source_F3.pt'
     netF.load_state_dict(torch.load(modelpath))
     modelpath = args.output_dir_src + '/source_B3.pt'
@@ -177,7 +170,7 @@ def train_target(args):
             param_group += [{'params': v, 'lr': args.lr * args.lr_decay2}]
         else:
             v.requires_grad = False
-
+            
     optimizer = optim.SGD(param_group)
     optimizer = op_copy(optimizer)
 
@@ -203,7 +196,7 @@ def train_target(args):
             netC.eval()
             label_map = {}
             rev_label_map = {}
-            mem_label = obtain_label(dset_loaders['test'], netF,netB,netC, args)
+            mem_label = obtain_label1(dset_loaders['test'], netF, netB, netC, iter_num, args)
             label_list = list(set(mem_label))
             label_list.sort()
             for i in range(len(label_list)):
@@ -211,7 +204,7 @@ def train_target(args):
                 rev_label_map[label_list[i]] = i
             for j in range(len(mem_label)):
                 mem_label[j] = rev_label_map[mem_label[j]]
-            print(len(label_list))
+            print(len(label_list), label_list)
 
             mem_label = torch.from_numpy(mem_label).cuda()
             netF.train()
@@ -222,7 +215,7 @@ def train_target(args):
 
         iter_num += 1
         lr_scheduler(optimizer, iter_num=iter_num, max_iter=max_iter)
-
+        # bs*2048 , bs*1000
         features_test = netB(netF(inputs_test))
         outputs_test = netC(features_test, label_list)
 
@@ -230,8 +223,6 @@ def train_target(args):
             pred = mem_label[tar_idx]
             classifier_loss = nn.CrossEntropyLoss()(outputs_test, pred)
             classifier_loss *= args.cls_par
-            if iter_num < interval_iter and args.dset == "VISDA-C":
-                classifier_loss *= 0
         else:
             classifier_loss = torch.tensor(0.0).cuda()
 
@@ -253,14 +244,10 @@ def train_target(args):
             netF.eval()
             netB.eval()
             netC.eval()
-            if args.dset == 'VISDA-C':
-                acc_s_te, acc_list = cal_acc(dset_loaders['test'], netF, netB, netC,  label_list,label_map, True)
-                log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name, iter_num, max_iter,
-                                                                            acc_s_te) + '\n' + acc_list
-            else:
+            if True:
                 acc_s_te, _ = cal_acc(dset_loaders['test'], netF, netB, netC,  label_list,label_map, False)
                 log_str = 'Task: {}, Iter:{}/{}; Accuracy = {:.2f}%'.format(args.name, iter_num, max_iter, acc_s_te)
-
+                
             args.out_file.write(log_str + '\n')
             args.out_file.flush()
             print(log_str + '\n')
@@ -269,11 +256,9 @@ def train_target(args):
             netC.train()
 
     if args.issave:
-        torch.save(netF.state_dict(), osp.join(args.output_dir, "target_F_" + args.savename + ".pt"))
-        torch.save(netB.state_dict(), osp.join(args.output_dir, "target_B_" + args.savename + ".pt"))
-        torch.save(netC.state_dict(), osp.join(args.output_dir, "target_C_" + args.savename + ".pt"))
+        torch.save(netF.state_dict(), osp.join(args.output_dir, "target" + args.savename + ".pt"))
 
-    return netF, netB, netC
+    return netF
 
 
 def print_args(args):
@@ -282,8 +267,17 @@ def print_args(args):
         s += "{}:{}\n".format(arg, content)
     return s
 
+def get_thresh1(a):
+    kmeans = KMeans(3, random_state=0).fit(a.reshape(-1,1))
+    labels = kmeans.predict(a.reshape(-1, 1))
+    idx = np.where(labels == 0)[0]
+    idx1 = np.where(labels == 1)[0]
+    idx2 = np.where(labels == 2)[0]
+    iidx = [idx, idx1, idx2][np.argmin([a[idx].mean(),a[idx1].mean(), a[idx2].mean()])]
+    print(f"thresh: {max(a[iidx])}")
+    return max(a[iidx])
 
-def obtain_label(loader, netF, netB, netC, args):
+def obtain_label1(loader, netF, netB, netC, iter_num, args):
     start_test = True
     with torch.no_grad():
         iter_test = iter(loader)
@@ -305,49 +299,35 @@ def obtain_label(loader, netF, netB, netC, args):
                 all_label = torch.cat((all_label, labels.float()), 0)
 
     all_output = nn.Softmax(dim=1)(all_output)
-    # ttt = torch.mean(all_output, dim=0)
-    # ttt = (ttt / torch.mean(ttt)).cuda().view(-1)
-    # print(ttt.size(), ttt)
-    ent = torch.sum(-all_output * torch.log(all_output + args.epsilon), dim=1)
-    unknown_weight = 1 - ent / np.log(args.class_num)
     _, predict = torch.max(all_output, 1)
-
     accuracy = torch.sum(torch.squeeze(predict).float() == all_label).item() / float(all_label.size()[0])
-    if args.distance == 'cosine':
-        all_fea = torch.cat((all_fea, torch.ones(all_fea.size(0), 1)), 1)
-        all_fea = (all_fea.t() / torch.norm(all_fea, p=2, dim=1)).t()
-
     all_fea = all_fea.float().cpu().numpy()
     K = all_output.size(1)
     aff = all_output.float().cpu().numpy()
     initc = aff.transpose().dot(all_fea)
     initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
     cls_count = np.eye(K)[predict].sum(axis=0)
-    print("cls_count", cls_count)
-    labelset = np.where(cls_count > args.threshold)
-    labelset = labelset[0]
-    # print(labelset)
+    threshold = 0.0
+    if iter_num == 0:
+        threshold = 0.0
+    elif min(cls_count)/max(cls_count) < 0.00001 :
+        threshold = get_thresh1(cls_count)
 
+    print(f"cls_count {cls_count}")
+    labelset = np.where(cls_count >= threshold)
+    labelset = labelset[0]
     dd = cdist(all_fea, initc[labelset], args.distance)
     pred_label = dd.argmin(axis=1)
     pred_label = labelset[pred_label]
-
-    for round in range(1):
-        aff = np.eye(K)[pred_label]
-        initc = aff.transpose().dot(all_fea)
-        initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
-        dd = cdist(all_fea, initc[labelset], args.distance)
-        pred_label = dd.argmin(axis=1)
-        pred_label = labelset[pred_label]
-
-    acc = np.sum(pred_label == all_label.float().numpy()) / len(all_fea)
+    guess_label = args.class_num * np.ones(len(all_label), )
+    guess_label = pred_label
+    acc = np.sum(guess_label == all_label.float().numpy()) / len(guess_label)
     log_str = 'Accuracy = {:.2f}% -> {:.2f}%'.format(accuracy * 100, acc * 100)
 
     args.out_file.write(log_str + '\n')
     args.out_file.flush()
     print(log_str + '\n')
-
-    return pred_label.astype('int')
+    return guess_label.astype('int')
 
 
 if __name__ == "__main__":
@@ -367,7 +347,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--gent', type=bool, default=True)
     parser.add_argument('--ent', type=bool, default=True)
-    parser.add_argument('--threshold', type=int, default=10)
+    parser.add_argument('--threshold', type=int, default=0)
     parser.add_argument('--cls_par', type=float, default=0.3)
     parser.add_argument('--ent_par', type=float, default=1.0)
     parser.add_argument('--lr_decay1', type=float, default=0.1)
@@ -378,14 +358,24 @@ if __name__ == "__main__":
     parser.add_argument('--layer', type=str, default="wn", choices=["linear", "wn"])
     parser.add_argument('--classifier', type=str, default="bn", choices=["ori", "bn"])
     parser.add_argument('--distance', type=str, default='cosine', choices=["euclidean", "cosine"])
-    parser.add_argument('--output', type=str, default='san')
+    parser.add_argument('--output', type=str, default='ckpt/target')
     parser.add_argument('--output_src', type=str, default='ckpt/source')
-    parser.add_argument('--da', type=str, default='pda', choices=['uda', 'pda'])
+    parser.add_argument('--da', type=str, default='pda', choices=['uda', 'pda', 'oda'])
     parser.add_argument('--issave', type=bool, default=False)
     args = parser.parse_args()
 
+    SEED = args.seed
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
+    np.random.seed(SEED)
+    random.seed(SEED)
+    # torch.backends.cudnn.deterministic = True
+
     if args.dset == 'office-home':
-        names = ['Art', 'RealWorld', 'Clipart', 'Product']  #
+        names = ['Product', 'RealWorld', 'Art', 'Clipart']
+        # names = ['Product', 'Art', 'Clipart', 'Real_World']
+        # names = ['Clipart', 'Art', 'Product', 'Real_World']
+        # names = ['Real_World', 'Product', 'Art', 'Clipart']
         args.class_num = 65
     if args.dset == 'office':
         names = ['amazon', 'dslr', 'webcam']
@@ -396,15 +386,9 @@ if __name__ == "__main__":
     if args.dset == 'office-caltech':
         names = ['amazon', 'caltech', 'dslr', 'webcam']
         args.class_num = 10
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
-    SEED = args.seed
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed(SEED)
-    np.random.seed(SEED)
-    random.seed(SEED)
-    # torch.backends.cudnn.deterministic = True
-
+    if args.dset == "cifar-stl":
+        names = ['cifar9', 'stl9']
+        args.class_num = 9
     for i in range(len(names)):
         if i == args.s:
             continue
@@ -432,9 +416,9 @@ if __name__ == "__main__":
 
         args.savename = 'par_' + str(args.cls_par)
         if args.da == 'pda':
-            args.gent = ''
-            args.savename = 'train_decline-par_' + str(args.cls_par) + '_thr' + str(args.threshold)
+            args.savename = 'par_' + str(args.cls_par) + '_thr' + str(args.threshold)
         args.out_file = open(osp.join(args.output_dir, 'log_' + args.savename + '.txt'), 'w')
         args.out_file.write(print_args(args) + '\n')
         args.out_file.flush()
+        print(args)
         train_target(args)
